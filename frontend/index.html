@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OS Virtual Memory & Page Replacement Simulator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen pb-12">
+
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-700 py-6 mb-8 shadow-md">
+        <div class="max-w-6xl mx-auto px-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-sky-400">Virtual Memory Simulator</h1>
+                <p class="text-sm text-slate-400">C++ REST Engine + Interactive Web UI</p>
+            </div>
+            <div id="serverStatus" class="flex items-center space-x-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-700 text-slate-300">
+                <span id="statusDot" class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <span id="statusText">Checking Backend...</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 space-y-8">
+
+        <!-- Controls Card -->
+        <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
+            <h2 class="text-lg font-semibold text-slate-200 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                Simulation Configuration
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Frame Capacity -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Number of Frames (1–10)</label>
+                    <input type="number" id="frames" min="1" max="10" value="3" 
+                           class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-100 focus:outline-none focus:border-sky-500">
+                </div>
+
+                <!-- Reference String -->
+                <div class="md:col-span-2">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-sm font-medium text-slate-300">Reference String</label>
+                        <button onclick="generateRandomRef()" class="text-xs text-sky-400 hover:text-sky-300 underline">Generate Random</button>
+                    </div>
+                    <input type="text" id="refString" value="7, 0, 1, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2, 1, 2, 0, 1, 7, 0, 1" 
+                           class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-100 focus:outline-none focus:border-sky-500">
+                </div>
+            </div>
+
+            <!-- Algorithm Selection & Buttons -->
+            <div class="mt-6 flex flex-wrap gap-4 items-center justify-between border-t border-slate-700/60 pt-6">
+                <div class="flex items-center space-x-3">
+                    <label class="text-sm font-medium text-slate-300">Algorithm:</label>
+                    <select id="algo" class="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-slate-100 focus:outline-none focus:border-sky-500">
+                        <option value="FIFO">FIFO (First-In, First-Out)</option>
+                        <option value="LRU">LRU (Least Recently Used)</option>
+                        <option value="OPTIMAL">Optimal</option>
+                    </select>
+                </div>
+
+                <div class="flex space-x-3">
+                    <button onclick="runSimulation()" class="bg-sky-600 hover:bg-sky-500 text-white font-medium px-5 py-2 rounded-lg shadow-md transition-all flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
+                        Simulate Selected
+                    </button>
+                    <button onclick="runComparison()" class="bg-purple-600 hover:bg-purple-500 text-white font-medium px-5 py-2 rounded-lg shadow-md transition-all flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        Compare All Algorithms
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Single Algorithm Results Section -->
+        <section id="singleResultSection" class="hidden space-y-6">
+            <!-- Metrics Summary Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl text-center">
+                    <p class="text-xs text-slate-400 font-medium">PAGE FAULTS</p>
+                    <p id="statFaults" class="text-3xl font-bold text-rose-400 mt-1">0</p>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl text-center">
+                    <p class="text-xs text-slate-400 font-medium">PAGE HITS</p>
+                    <p id="statHits" class="text-3xl font-bold text-emerald-400 mt-1">0</p>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl text-center">
+                    <p class="text-xs text-slate-400 font-medium">HIT RATIO</p>
+                    <p id="statHitRatio" class="text-3xl font-bold text-sky-400 mt-1">0%</p>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl text-center">
+                    <p class="text-xs text-slate-400 font-medium">FAULT RATIO</p>
+                    <p id="statFaultRatio" class="text-3xl font-bold text-amber-400 mt-1">0%</p>
+                </div>
+            </div>
+
+            <!-- Frame Execution Matrix Table -->
+            <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 overflow-x-auto">
+                <h3 class="text-md font-semibold text-slate-200 mb-4">Step-by-Step Memory Execution State</h3>
+                <div id="tableContainer" class="overflow-x-auto"></div>
+            </div>
+        </section>
+
+        <!-- Comparison Results Section -->
+        <section id="compareResultSection" class="hidden space-y-6">
+            <div class="bg-slate-800 border border-slate-700 rounded-xl p-6">
+                <h3 class="text-md font-semibold text-slate-200 mb-4">Algorithm Performance Comparison</h3>
+                <div class="h-72">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 overflow-x-auto">
+                <h3 class="text-md font-semibold text-slate-200 mb-4">Detailed Performance Summary</h3>
+                <div id="compareTableContainer"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

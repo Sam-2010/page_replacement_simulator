@@ -1,0 +1,37 @@
+/* Custom Frame & Table Visual Styles */
+.matrix-table {
+    border-collapse: separate;
+    border-spacing: 4px;
+    width: 100%;
+}
+
+.matrix-table th, .matrix-table td {
+    text-align: center;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+}
+
+.cell-hit {
+    background-color: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #34d399;
+}
+
+.cell-fault {
+    background-color: rgba(244, 63, 94, 0.15);
+    border: 1px solid rgba(244, 63, 94, 0.4);
+    color: #f87171;
+}
+
+.cell-empty {
+    background-color: rgba(51, 65, 85, 0.4);
+    color: #64748b;
+}
+
+.replaced-badge {
+    font-size: 0.7rem;
+    color: #fbbf24;
+    display: block;
+    margin-top: 2px;
+}
